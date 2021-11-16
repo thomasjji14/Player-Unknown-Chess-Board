@@ -189,10 +189,16 @@ class Game:
 
                 ktext = self.__kibitzer.getMoves(self.__boardLogic.fen())
 
-                for move in list(ktext.keys()):
+                # for move in list(ktext.keys()):
+                moveTexts = list(ktext.keys())
+                i = 5
+                while(len(moveTexts) > 0 and i != 0):
+                    move = moveTexts.pop(0)
                     evalText = ktext[move]['score']
                     evalText = f'{int(evalText)/100:+1.2f}'
                     print(self.__LANtoSAN(move) + " " + str(evalText) )
+                    i -= 1
+                print("--------------")
 
 
                 return
