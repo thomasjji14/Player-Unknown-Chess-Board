@@ -34,7 +34,7 @@ class LichessPlayer():
         self.__pastMoves.append(lastMove)
         self.__params["play"] = self.__moveToString()
 
-        gameURLResponse = requests.get("https://explorer.lichess.ovh/lichess?", params = self.__params)
+        gameURLResponse = requests.get("https://explorer.lichess.ovh/lichess", params = self.__params)
 
         json_response = gameURLResponse.json()
         moves = json_response['moves']

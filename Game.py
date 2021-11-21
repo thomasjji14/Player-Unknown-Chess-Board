@@ -65,6 +65,7 @@ class Game:
         #     {"e4" : {"c6": {"Nf3" : {"d5" : {"Nc3" : {"dxe4" : {"Nxe4" : {"Bf5" : {"Ng3" : {"Bg6" : {"h4" : {"h6" : {"Ne5" : {"Bh7" : {"Qh5" : {"g6" : {"Bc4" : {"e6" : {"Qe2" : {"Bg7" : {"Nxf7" : {"Kxf7" : {"Qxe6+" : {"Kf8" : {"Qf7#" : None}}}}}}}}}}}}}}}}}}}}}}}}}
         # )
         self.__opponentPlayer = LichessPlayer(startingFEN = FENCode)
+        # self.__kibitzer = ChessDBCNKibitzer()
         self.__kibitzer = ChessDBCNKibitzer()
 
     def __readFEN(self, FENCode, asWhite):
@@ -181,15 +182,15 @@ class Game:
                 self.__boardLogic.push_uci(attemptedMoveAN)
 
                 self.__board.update_idletasks()
-                # self.__opponentPlayer = LichessPlayer()
-                # self.pushMove(self.__opponentPlayer.getMove(self.__boardLogic.fen()))
-                
-                # self.pushMove(self.__opponentPlayer.getMove(moveSAN))
-                self.pushMove(self.__opponentPlayer.getMove(attemptedMoveAN))
+                try:
+                    # Get and push the oppponent's move
+                    self.pushMove(self.__opponentPlayer.getMove(attemptedMoveAN))
+                except:
+                    print("Out of moves.")
+                    pass
 
                 ktext = self.__kibitzer.getMoves(self.__boardLogic.fen())
 
-                # for move in list(ktext.keys()):
                 moveTexts = list(ktext.keys())
                 i = 5
                 while(len(moveTexts) > 0 and i != 0):
@@ -468,7 +469,7 @@ base = Tk()
 base.title("Chess")
 
 # board = Game(base, Game.DEFAULT_FEN, True)
-# board = Game(base, "r1b1kbnr/pppp1ppp/2n5/3NP3/5q2/5N2/PPP1PPPP/R2QKB1R b KQkq - 1 6", True)
-board = Game(base, "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3", True)
+board = Game(base, "rnbqkbnr/pppp1ppp/4p3/8/5PP1/8/PPPPP2P/RNBQKBNR b KQkq - 0 2", True)
+# board = Game(base, "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3", True)
 
 base.mainloop()
