@@ -59,7 +59,7 @@ class Gametree():
         """
         # Modifies the current subtree
         if not type(line) is list:
-            raise TypeError("Gametree beginning must be done with a list.")
+            raise TypeError("Gametree population must be done with a list.")
 
         try:
             for move in line:
@@ -71,7 +71,7 @@ class Gametree():
     
     def visualizeTrees(self, delimiter = " "):
         """
-        Performs a printout of the tree for debugging purposes only.
+        Performs a printout of the tree (debugging purposes only).
         """
         print("Tree")
         print(self._visualizeEmbeddedDict(self.__tree, delimiter))
@@ -103,22 +103,9 @@ class Gametree():
                 returnString += char
         
         return returnString
-            
-    #     # def dictStringRecursiveHelper(tree, string):
-    #     #     # Empty dictionary
-    #     #     if not bool(tree):
-    #     #         return
-    #     #     # Add key and it's children before moving onto subsequent
-    #     #     # keys
-    #     #     for move in list(tree.keys()):
-    #     #         Gametree.embeddedDictToStr(tree[move])
-    #     str(embeddedDict)
-            
-    #     dictStringRecursiveHelper(tree, "")
-
-
 
 if __name__ == "__main__":
+    # Sample code
     a = Gametree()
     a.populateFromList(["e4", "e5", "c3"])
     a.populateFromList(["e4", "e5", "c4"])
