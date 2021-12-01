@@ -72,13 +72,14 @@ class VariationPlayer():
     
     def getMove(self, lastMove):
         if self.__variation is None:
-            raise OutOfMovesException()
+            # raise OutOfMovesException()
+            return None
+        if not lastMove in self.__variation:
+            return None
         
-        try:
-            self.__variation = self.__variation[lastMove]
-        except:
-            raise WrongVariationException()
+        self.__variation = self.__variation[lastMove]
         
-        moveToReturn = list(self.__variation.keys())[0]
+        moveToReturn = list(self.__variation.keys())[random.randint(0, len(self.__variation)-1)]
+
         self.__variation = self.__variation[moveToReturn]
         return moveToReturn

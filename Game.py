@@ -10,7 +10,8 @@ from Kibitzer import *
 
 from FileManager import *
 
-from json.decoder import JSONDecodeError
+from Gametree import Gametree
+
 import chess
 
 class Game:
@@ -67,6 +68,9 @@ class Game:
         self.__opponentPlayer = LichessPlayer(startingFEN = FENCode)
         # self.__kibitzer = ChessDBCNKibitzer()
         self.__kibitzer = ChessDBCNKibitzer()
+        self.__tree = Gametree()
+        self.__tree.loadTree("user.json")
+        self.__tree.beginFromMoves(["e4","e5","Nf3","Nc6","Bc4","Nf6","Ng5"])
 
     def __readFEN(self, FENCode, asWhite):
         """ Takes in a FENCode and initializes the board """
@@ -179,12 +183,21 @@ class Game:
                 self.__endMove(clickLoc)
 
                 moveSAN = self.__boardLogic.san(chess.Move.from_uci(attemptedMoveAN))
+
+                self.__tree.pushMove(moveSAN)
+                self.__tree.saveTree("user.json")
+
+
                 self.__boardLogic.push_uci(attemptedMoveAN)
 
                 self.__board.update_idletasks()
                 try:
                     # Get and push the oppponent's move
-                    self.pushMove(self.__opponentPlayer.getMove(attemptedMoveAN))
+                    #lan
+                    oppMove = self.__opponentPlayer.getMove(attemptedMoveAN)
+                    self.__tree.pushMove(self.__LANtoSAN(oppMove))
+                    self.__tree.saveTree("user.json")
+                    self.pushMove(oppMove)
                 except:
                     print("Out of moves.")
                     pass
@@ -216,6 +229,10 @@ class Game:
 
         self.__originalPos = Coordinate.stringToCoordinate(lan[0:2])
         endPos = Coordinate.stringToCoordinate(lan[2:4])
+
+        if not self.__isPlayerWhite:
+            self.__originalPos.invert()
+            endPos.invert()
         self.__promotionText = "" if len(lan) == 4 else (lan[4].upper() if self.__boardLogic.turn else lan[4].lower())
         self.__activeCell = copy.copy(self.__board.getCell(self.__originalPos))
 
@@ -469,7 +486,7 @@ base = Tk()
 base.title("Chess")
 
 # board = Game(base, Game.DEFAULT_FEN, True)
-board = Game(base, "rnbqkbnr/pppp1ppp/4p3/8/5PP1/8/PPPPP2P/RNBQKBNR b KQkq - 0 2", True)
+board = Game(base, "r1bqkb1r/pppp1ppp/2n2n2/4p1N1/2B1P3/8/PPPP1PPP/RNBQK2R b KQkq - 5 4", False)
 # board = Game(base, "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3", True)
 
 base.mainloop()
