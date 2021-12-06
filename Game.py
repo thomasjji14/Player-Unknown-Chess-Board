@@ -1,19 +1,15 @@
-import copy
 from Chessboard import Chessboard
 from tkinter import *
 from Coordinate import Coordinate
 from CanvasUtility import *
 from Cell import Cell
 from Player import *
-import chess
 from collections import deque
 from Kibitzer import *
-
 from FileManager import *
-
 from Gametree import LinkedTree
-
 import chess
+import copy
 
 class Game:
     BROWN = '#B58863'
@@ -199,7 +195,6 @@ class Game:
 
         self.__rightClickEvent(None)
     
-
     def pushMove(self, text):
         # Rough SAN detection
         if self.__isLAN(text):
@@ -219,22 +214,6 @@ class Game:
         self.__endMove(endPos)
 
         self.__boardLogic.push_san(text)
-
-    def __isLAN(self, text):
-        if text[0].isupper():
-            return False
-        if not len(text) in [4,5]:
-            return False
-        if "+" in text or "#" in text or "=" in text:
-            return False
-        return True
-
-    # SAN -> LAN
-    def __SANtoLAN(self, moveText):
-        return self.__boardLogic.parse_san(moveText).uci()
-
-    def __LANtoSAN(self, moveText):
-        return self.__boardLogic.san(chess.Move.from_uci(moveText))
 
     def __endMove(self, finalPos):
         isWhite = self.__boardLogic.turn
@@ -526,8 +505,6 @@ class Game:
         
         return boardGrid
 
-
-
     def __backtrackPGN(self, event):
         if not self.__activeTree.hasMoves():
             return
@@ -566,6 +543,22 @@ class Game:
                 if not lastBoard[row][col] == newBoard[row][col]:
                     self.__board.textUpdate(
                         newBoard[row][col], Coordinate(row,col))
+
+    def __isLAN(self, text):
+        if text[0].isupper():
+            return False
+        if not len(text) in [4,5]:
+            return False
+        if "+" in text or "#" in text or "=" in text:
+            return False
+        return True
+
+    # SAN -> LAN
+    def __SANtoLAN(self, moveText):
+        return self.__boardLogic.parse_san(moveText).uci()
+
+    def __LANtoSAN(self, moveText):
+        return self.__boardLogic.san(chess.Move.from_uci(moveText))
 
     @staticmethod
     def numToLetter(num):
