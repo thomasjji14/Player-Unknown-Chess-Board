@@ -46,7 +46,7 @@ class Game:
         self.__base.bind('<ButtonRelease-1>', self.__deselectPiece)
         self.__base.bind('<Button-3>', self.__rightClickEvent)
         self.__base.bind('<ButtonRelease-3>', self.__finishShape)
-        # self.__base.bind('<Right>', self.__advancePGN)
+        self.__base.bind('<Right>', self.__advancePGN)
         self.__base.bind('<Left>', self.__backtrackPGN)
         # self.__base.bind('<space>', self.__printFEN)
         # self.__base.bind('<Up>', self.__printPGN)
@@ -541,6 +541,17 @@ class Game:
         lastBoardFEN = self.__boardLogic.board_fen()
         self.__boardLogic.pop()
         newBoardFEN = self.__boardLogic.board_fen()
+
+        self.__updateVisualBoard(lastBoardFEN, newBoardFEN)
+
+    def __advancePGN(self, event):
+        if self.__activeTree.hasNext():
+            lastBoardFEN = self.__boardLogic.board_fen()
+            self.__boardLogic.push_san(self.__activeTree.advance())
+            newBoardFEN = self.__boardLogic.board_fen()
+            self.__updateVisualBoard(lastBoardFEN, newBoardFEN)
+
+    def __updateVisualBoard(self, lastBoardFEN, newBoardFEN):
         if not self.__isPlayerWhite:
             lastBoardFEN = lastBoardFEN[::-1]
             newBoardFEN = newBoardFEN[::-1]
@@ -555,11 +566,6 @@ class Game:
                 if not lastBoard[row][col] == newBoard[row][col]:
                     self.__board.textUpdate(
                         newBoard[row][col], Coordinate(row,col))
-
-    def __advancePGN(self, event):
-        # if 
-        pass
-
 
     @staticmethod
     def numToLetter(num):

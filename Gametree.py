@@ -63,13 +63,15 @@ class _LinkedTreeNode():
     def getAllMoves(self) -> list:
         return list(self._moveQueue)
 
-
     def getAllChildren(self) -> list:
         moves = self.getAllMoves()
         return [self._moveDict[move] for move in moves]
 
     def dropNode(self, moveName):
         self._moveDict.pop(moveName)
+
+    def isEmpty(self):
+        return self.getNumChildren() == 0
 
 
 class LinkedTree():
@@ -87,12 +89,20 @@ class LinkedTree():
         self._curNode = self._root
         self._startingMoves = deque()
 
-    def advance(self, move) -> None:
+    def advance(self, move = None) -> str:
         """
         Progresses in the tree; does not add moves into the tree
-        """
 
-        if not self._curNode.hasMove(move):
+        Return
+        ------
+        (str) The move advanced
+        """
+        if self._curNode.isEmpty():
+            raise KeyError("Move not found")
+
+        if move is None:
+            move = self._curNode.getAllMoves()[0]
+        elif not self._curNode.hasMove(move):
             raise KeyError("Move not found")
 
         self._startingMoves.append(move)
@@ -101,6 +111,8 @@ class LinkedTree():
 
         # DEBUG
         print(self.asLines())
+
+        return move
 
     def addMove(self, move):
         """
@@ -206,6 +218,8 @@ class LinkedTree():
     def hasMoves(self):
         return len(self._startingMoves) != 0
 
+    def hasNext(self):
+        return self._curNode.getNumChildren() != 0
     # def toDict(self):
     #     returnDict = {}
 
