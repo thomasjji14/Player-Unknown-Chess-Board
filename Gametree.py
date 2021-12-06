@@ -25,8 +25,6 @@ class _LinkedTreeNode():
         return f"_LinkedTreeNode({self._parentNode})"
     
     def addMove(self, move) -> None:
-        # TODO: Verify that heapify doesn't change order of 1s
-        # TODO: Define behavior when the move is already in
         self._moveQueue.append(move)
         self._moveDict[move] = _LinkedTreeNode(self, move)
         pass
@@ -102,7 +100,7 @@ class LinkedTree():
         self._curNode = self._curNode.getNext(move)
 
         # DEBUG
-        print(self.printTree())
+        print(self.asLines())
 
     def addMove(self, move):
         """
@@ -141,7 +139,11 @@ class LinkedTree():
             parentMove = curTraversal.node.getParentMove()
             if not parentMove is None:
                 treeString += spacer*curTraversal.depth + curTraversal.node.getParentMove() + "\n"
-            for node in curTraversal.node.getAllChildren():
+            
+            # The DFS goes from the last node to the first, flipping to
+            # compensate
+            children = curTraversal.node.getAllChildren()[::-1]
+            for node in children:
                 nodeStack.append(DepthNode(node, curTraversal.depth + 1))
         
         return treeString
@@ -172,7 +174,10 @@ class LinkedTree():
             if curTraversal.node.getNumChildren() == 0:
                 lines.append(list(moveCallStack))
             else:
-                for node in curTraversal.node.getAllChildren():
+                # The DFS goes from the last node to the first, flipping to
+                # compensate
+                children = curTraversal.node.getAllChildren()[::-1]
+                for node in children:
                     nodeStack.append(DepthNode(node, curTraversal.depth + 1))
         
         return lines
