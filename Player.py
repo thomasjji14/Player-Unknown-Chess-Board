@@ -5,11 +5,11 @@ from chess import Move
 DEFAULT_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
 
 class OutOfMovesException(Exception):
-    def __init__(self):
+    def _init__(self):
         super()
 
 class WrongVariationException(Exception):
-    def __init__(self):
+    def _init__(self):
         super()
 
 class LichessPlayer():
@@ -20,8 +20,8 @@ class LichessPlayer():
         ratings = [1600, 1800, 2000, 2200, 2500],
         startingFEN = DEFAULT_FEN
         ):
-        # self.__pastMoves = []
-        self.__params = {
+        # self._pastMoves = []
+        self._params = {
             "variant": variant,  
             "speeds[]": speeds, 
             "ratings[]" : ratings, 
@@ -32,15 +32,15 @@ class LichessPlayer():
 
 #     def getMove(self, lastMove, moveList = None):
 #         if moveList is None:
-#             self.__pastMoves.append(lastMove)
+#             self._pastMoves.append(lastMove)
 #         else:
-#             self.__pastMoves = moveList
-#         self.__params["play"] = self.__moveToString(self.__pastMoves)
+#             self._pastMoves = moveList
+#         self._params["play"] = self._moveToString(self._pastMoves)
 
     def getMove(self, newFEN):
-        self.__params["fen"] = newFEN
+        self._params["fen"] = newFEN
 
-        gameURLResponse = requests.get("https://explorer.lichess.ovh/lichess", params = self.__params)
+        gameURLResponse = requests.get("https://explorer.lichess.ovh/lichess", params = self._params)
 
         json_response = gameURLResponse.json()
         moves = json_response['moves']
@@ -57,16 +57,16 @@ class LichessPlayer():
             raise OutOfMovesException()
 
         randomMoveNumber = random.randint(1, totalGames)
-        randomMove = self.__getRandomMove(randomMoveNumber, moveCumFrequency)
+        randomMove = self._getRandomMove(randomMoveNumber, moveCumFrequency)
 
-        # self.__pastMoves.append(randomMove)
+        # self._pastMoves.append(randomMove)
 
         return randomMove
     
-    def __moveToString(self, moves):
+    def _moveToString(self, moves):
         return "".join([i+"," for i in moves])[:-1]
 
-    def __getRandomMove(self, randNum, moveFrequency):
+    def _getRandomMove(self, randNum, moveFrequency):
         for key in list(moveFrequency.keys()):
             if randNum <= moveFrequency[key]:
                 return key
@@ -75,18 +75,18 @@ class LichessPlayer():
 class VariationPlayer():
     
     def __init__(self, inputVariation):
-        self.__variation = inputVariation
+        self._variation = inputVariation
     
     def getMove(self, lastMove):
-        if self.__variation is None:
+        if self._variation is None:
             # raise OutOfMovesException()
             return None
-        if not lastMove in self.__variation:
+        if not lastMove in self._variation:
             return None
         
-        self.__variation = self.__variation[lastMove]
+        self._variation = self._variation[lastMove]
         
-        moveToReturn = list(self.__variation.keys())[random.randint(0, len(self.__variation)-1)]
+        moveToReturn = list(self._variation.keys())[random.randint(0, len(self._variation)-1)]
 
-        self.__variation = self.__variation[moveToReturn]
+        self._variation = self._variation[moveToReturn]
         return moveToReturn

@@ -22,7 +22,7 @@ class Coordinate():
         self.x *= -1
         self.y *= -1
     
-    def __asAN(self, isWhitePerspective = True) -> str:
+    def _asAN(self, isWhitePerspective = True) -> str:
         if not isWhitePerspective:
             self.invert()
         letter = self.numToLetter(self.y)
@@ -34,7 +34,7 @@ class Coordinate():
 
     @staticmethod
     def toLAN(fromCoordinate, toCoordinate, isWhitePerspective = True) -> str:
-        return fromCoordinate.__asAN(isWhitePerspective) + toCoordinate.__asAN(isWhitePerspective)
+        return fromCoordinate._asAN(isWhitePerspective) + toCoordinate._asAN(isWhitePerspective)
 
     @staticmethod
     def stringToCoordinate(string):
