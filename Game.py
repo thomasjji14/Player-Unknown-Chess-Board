@@ -162,6 +162,7 @@ class Game:
                 moveSAN = self.__boardLogic.san(chess.Move.from_uci(attemptedMoveAN))
 
                 self.__boardLogic.push_uci(attemptedMoveAN)
+                self.__activeTree.addMove(moveSAN)
                 self.__activeTree.advance(moveSAN)
 
                 self.__board.update_idletasks()
@@ -175,6 +176,8 @@ class Game:
                         # [self.__SANtoLAN(move) \
                         #  for move in self.__activeTree.getPlayedMoves()]
                         )
+
+                    self.__activeTree.addMove(self.__LANtoSAN(oppMove))
                     self.__activeTree.advance(self.__LANtoSAN(oppMove))
                     self.pushMove(oppMove)
                 # except:

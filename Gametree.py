@@ -8,90 +8,14 @@
 #         super(str)
 from __future__ import annotations
 from collections import deque
-import heapq
-
-
-class _WeightedMove():
-    """
-    A class (record) of a move and its associated weight.
-
-    ...
-
-    Methods
-    -------
-    getMove()
-        Returns the move associated with the instance
-    setMove(move)
-        Sets the instance's move
-    getWeight()
-        Returns the weight associated witht he instance
-    setWeight(weight)
-        Sets the instance's weight
-    """
-
-    def __init__(self, move, weight):
-        """
-        Parameters
-        ----------
-        move : str
-            The text representation (typically in SAN) of the move
-        weight : int
-            The weight of the move
-        """
-        self._move = move
-        self._weight = weight
-    
-    def __eq__(self, other):
-        """ Checks for equality based on the weights """
-        return self.getWeight() == other.getWeight()
-
-    def __lt__(self, other):
-        """ Comparisons based on the weights """
-        return self.getWeight() < other.getWeight()
-
-    def __le__(self, other):
-        """ Comparisons based on the weights """
-        return self.getWeight() <= other.getWeight()
-
-    def __gt__(self, other):
-        """ Comparisons based on the weights """
-        return self.getWeight() > other.getWeight()
-
-    def __ge__(self, other):
-        """ Comparisons based on the weights """
-        return self.getWeight() >= other.getWeight()
-    
-    def __repr__(self):
-        """ Formatted as a constructor call """
-        return f"WeightedMove({self._move}, {self._weight})"
-
-    def getMove(self) -> str:
-        """ 
-        Returns the move associated with the instance
-
-        Returns
-        -------
-        str: the move
-        """
-        return self._move
-
-    def setMove(self, move):
-        self._move = move
-
-    def getWeight(self):
-        return self._weight
-
-    def setWeight(self, weight):
-        self._weight = weight
-
-
+from typing import Deque
 
 class _LinkedTreeNode():
 
     def __init__(self, parentNode = None, parentsMove = None):
         self._parentNode = parentNode
         self._parentsMove = parentsMove
-        self._moveQueue = []
+        self._moveQueue = deque()
         self._moveDict = {}
 
     def __str__(self):
@@ -100,19 +24,19 @@ class _LinkedTreeNode():
     def __repr__(self):
         return f"_LinkedTreeNode({self._parentNode})"
     
-    def addMove(self, weightedMove) -> None:
+    def addMove(self, move) -> None:
         # TODO: Verify that heapify doesn't change order of 1s
         # TODO: Define behavior when the move is already in
-        heapq.heappush(self._moveQueue, weightedMove)
-        self._moveDict[weightedMove.getMove()] = _LinkedTreeNode(self, weightedMove.getMove())
+        self._moveQueue.append(move)
+        self._moveDict[move] = _LinkedTreeNode(self, move)
         pass
 
 
-    def getNext(self, weightedMove) -> _WeightedMove:
-        return self._moveDict[weightedMove.getMove()]
+    def getNext(self, move) -> str:
+        return self._moveDict[move]
     
-    def hasMove(self, weightedMove) -> bool:
-        return weightedMove.getMove() in list(self._moveDict.keys())
+    def hasMove(self, move) -> bool:
+        return move in list(self._moveDict.keys())
 
     def getParent(self) -> _LinkedTreeNode:
         return self._parentNode
@@ -120,26 +44,26 @@ class _LinkedTreeNode():
     def getParentMove(self) -> str:
         return self._parentsMove
 
-    def getMoveWeight(self, weightedMove) -> int:
-        for move in self._moveQueue:
-            if move.getMove() == weightedMove.getMove():
-                return move.getWeight()
+    # def getMoveWeight(self, move) -> int:
+    #     for move in self._moveQueue:
+    #         if move.getMove() == weightedMove.getMove():
+    #             return move.getWeight()
             
-        raise IndexError()
+    #     raise IndexError()
 
-    def setMoveWeight(self, weightedMove) -> None:
-        for move in self._moveQueue:
-            if move.getMove() == weightedMove.getMove():
-                move.setWeight(weightedMove.getWeight())
-                return
+    # def setMoveWeight(self, move) -> None:
+    #     for queuedmove in self._moveQueue:
+    #         if move == move:
+    #             move.setWeight(move.getWeight())
+    #             return
             
-        raise IndexError()
+    #     raise IndexError()
 
     def getNumChildren(self) -> int:
         return len(self._moveDict)
 
     def getAllMoves(self) -> list:
-        return [wmove.getMove() for wmove in self._moveQueue]
+        return list(self._moveQueue)
 
 
     def getAllChildren(self) -> list:
@@ -165,24 +89,28 @@ class LinkedTree():
         self._curNode = self._root
         self._startingMoves = deque()
 
-    def advance(self, move, weight = 1) -> None:
+    def advance(self, move) -> None:
         """
-        Progresses in the tree; adds the move or updates the weight.
+        Progresses in the tree; does not add moves into the tree
         """
-        weightedMove = _WeightedMove(move, weight)
+
+        if not self._curNode.hasMove(move):
+            raise KeyError("Move not found")
 
         self._startingMoves.append(move)
 
-        # Already seen
-        if self._curNode.hasMove(weightedMove):
-            # Update the weight; doesn't change queue order
-            self._curNode.setMoveWeight(weightedMove)
-        else:
-            self._curNode.addMove(weightedMove)
+        self._curNode = self._curNode.getNext(move)
 
-        self._curNode = self._curNode.getNext(weightedMove)
-
+        # DEBUG
         print(self.printTree())
+
+    def addMove(self, move):
+        """
+        Adds the move into the tree. No behavior changes if move exists 
+        already.
+        """
+        if not self._curNode.hasMove(move):
+            self._curNode.addMove(move)       
     
     def backpedal(self) -> str:
         """ Returns the last move played """
@@ -193,7 +121,8 @@ class LinkedTree():
         return self._startingMoves.pop()
     
     def deleteMove(self):
-        self._curNode
+        # self._curNode
+        pass
 
     def printTree(self, spacer = " ") -> str:
         class DepthNode():
@@ -216,9 +145,6 @@ class LinkedTree():
                 nodeStack.append(DepthNode(node, curTraversal.depth + 1))
         
         return treeString
-    
-    def getPlayedMoves(self) -> list:
-        return list(self._startingMoves)
 
     def asLines(self) -> list:
         class DepthNode():
@@ -251,21 +177,24 @@ class LinkedTree():
         
         return lines
 
-    def populateFromRoot(self, moves, weight = 1):
+    def getPlayedMoves(self) -> list:
+        return list(self._startingMoves)
+
+    def populateFromRoot(self, moves):
         oldCur = self._curNode
 
         self._curNode = self._root
 
         for move in moves:
-            self.advance(move, weight)
+            self.advance(move)
 
         self._curNode = oldCur
     
-    def populateFromCur(self, moves, weight = 1):
+    def populateFromCur(self, moves):
         oldCur = self._curNode
 
         for move in moves:
-            self.advance(move, weight)
+            self.advance(move)
 
         self._curNode = oldCur
 
@@ -292,212 +221,3 @@ if __name__ == "__main__":
     print(a.asLines())
 
     lines = lines
-
-
-
-
-
-# class Gametree():
-
-    # def __init__(self):
-    #     # Full tree that changes with the subtree
-    #     self.__tree = {}
-    #     # Copy of the original tree between resets, used if you want
-    #     # to revert back to the original
-    #     self.__memoryTree = {}
-    #     # Active subtree    
-    #     self.__currentSubtree = self.__tree
-
-    # def clearMemory(self):
-    #     self.__tree = {}
-    #     self.__currentSubtree = {}
-    #     self.__memoryTree = self.__tree
-
-    # def commitTree(self):
-    #     self.__memoryTree = deepcopy(self.__tree)
-    
-    # def revertTree(self):
-    #     self.__tree = deepcopy(self.__memoryTree)
-    
-    # def clearInitialMoves(self):
-    #     self.__currentSubtree = self.__tree
-
-    # def populateFromList(self, line):
-    #     """
-    #     Takes a list of moves represented as SAN strings        
-    #     """
-    #     if not type(line) is list:
-    #         raise TypeError("Gametree population must be done with a list.")
-    #     populationSubtree = self.__currentSubtree
-    #     while(len(line) > 0):
-    #         move = line.pop(0)
-    #         if move not in list(populationSubtree.keys()):
-    #             populationSubtree[move] = {}
-    #         populationSubtree = populationSubtree[move]
-    
-    # def pushMove(self, move):
-    #     self.populateFromList([move])
-    #     self.__currentSubtree = self.__currentSubtree[move]
-    
-    # @staticmethod
-    # def moveStringToList(line):
-    #     """ From PGN move styles, assuming that there are no comments"""
-    #     moveList = []
-    #     splitString = line.split(" ")
-    #     for i in range(len(splitString)):
-    #         if i % 3 != 0:
-    #             moveList.append(splitString[i])
-    #     return moveList
-        
-    # def beginFromMoves(self, line):
-    #     """ 
-    #     Takes a list of SAN to begin the line with     
-    #     """
-    #     # Modifies the current subtree
-    #     if not type(line) is list:
-    #         raise TypeError("Gametree population must be done with a list.")
-
-    #     # try:
-    #     for move in line:
-    #         if not type(move) is str:
-    #             raise TypeError("List indicies must be string.")
-    #         if not move in list(self.__currentSubtree.keys()):
-    #             self.populateFromList([move])
-    #         self.__currentSubtree = self.__currentSubtree[move]
-    #     # except:
-    #     #     raise MoveNotInTreeError()
-    
-    # def visualizeTrees(self, delimiter = " "):
-    #     """
-    #     Performs a printout of the tree (debugging purposes only).
-    #     """
-    #     print("Tree")
-    #     print(self._visualizeEmbeddedDict(self.__tree, delimiter))
-    #     print("MemoryTree")
-    #     print(self._visualizeEmbeddedDict(self.__memoryTree, delimiter))
-    #     print("Subtree")
-    #     print(self._visualizeEmbeddedDict(self.__currentSubtree, delimiter))
-
-    # def saveTree(self, filename):
-    #     with open(filename, "w+") as f:
-    #         json.dump(self.__tree, f, sort_keys = True, indent = 4)
-
-    # def loadTree(self, filename):
-    #     with open(filename, "r+") as f:
-    #         self.__tree = json.load(f)
-    #         self.commitTree()
-    #         self.__currentSubtree = self.__tree
-    #     # self.__tree = json.loads(filename)
-    
-    # @staticmethod
-    # def _visualizeEmbeddedDict(tree, delimiter, moveSplitter = "\n"):
-    #     charactersToIgnore = [" ", ","]
-    #     charactersToNewline = ["\'"]
-    #     # the character, ' , is used to determine when a new line is
-    #     # found, so remove trailing chars
-    #     treeString = str(tree).replace("\':", "")
-
-    #     returnString = ""
-    #     spacing = -1
-    #     for char in treeString:
-    #         if char in charactersToIgnore:
-    #             continue
-    #         elif char == "{":
-    #             spacing += 1
-    #         elif char == "}":
-    #             spacing -= 1
-    #         elif char in charactersToNewline:
-    #             returnString += moveSplitter + delimiter * spacing
-    #         else:
-    #             returnString += char
-        
-    #     return returnString
-
-    # def toLines(self):
-    #     """ Returns the saved version of the tree in PGN lines """
-    #     dictString = self._visualizeEmbeddedDict(self.__memoryTree, delimiter = " ", moveSplitter = "|")
-
-    #     moves = dictString.split("|")
-    #     moves = moves[1:] # discard first element (a dud empty string)
-
-    #     moveStack = []
-    #     lines = []
-
-    #     lastDepth = 0
-    #     curDepth = 0
-
-    #     for move in moves:
-    #         curDepth = move.count(" ")
-            
-    #         if len(moveStack) == 0:
-    #             moveStack.append(move)
-    #         else:
-    #             if curDepth <= lastDepth:
-    #                 # if curDepth != lastDepth:
-    #                 lines.append(copy(moveStack)[::-1])
-    #                 for i in range(abs(curDepth - lastDepth) + 1):
-    #                     moveStack.pop(0)
-    #             moveStack.insert(0, move.strip())
-                
-    #         lastDepth = curDepth
-        
-    #     # Since the for loop only compares moving forward, the last
-    #     # one will be dropped; manually add it in.
-    #     if len(moveStack) != 0:
-    #         lines.append(copy(moveStack)[::-1])
-    #     return lines
-
-
-
-
-
-    # print(_WeightedMove("s",5))
-    # a = LinkedTree()
-    # a.pushMove("e4")
-    # print(a.popMove())
-
-
-
-    
-
-
-# if __name__ == "__main__":
-#     # a = [_WeightedMove("e"+str(i), i) for i in range(8)]
-#     # a = [i for i in range(8)]
-#     a = [3,2,1,4]
-
-#     print([str(move) for move in a])
-
-#     heapq.heapify(a)
-
-#     print([str(move) for move in a])
-
-
-#     # Sample code
-#     a = Gametree()
-#     a.populateFromList(["e4", "e5", "c3"])
-#     a.populateFromList(["e4", "e5", "c4"])
-#     a.populateFromList(["e4", "e5", "d4"])
-#     a.populateFromList(["e4", "c5", "d4"])
-    
-#     a.commitTree()
-#     print(a.toLines())
-#     # a.visualizeTrees(delimiter = "-")
-
-#     # a.beginFromMoves(["e4"])
-
-#     # print("----------")
-
-#     # a.visualizeTrees(delimiter="-")
-#     # a.populateFromList(["h5"])
-
-#     # print("---------")
-#     # a.visualizeTrees
-    
-#     # print("------")
-#     # a.commitTree()
-#     # a.visualizeTrees(delimiter= "-")
-
-#     # a.populateFromList(["c4", "d5"])
-#     # a.revertTree()
-#     # a.visualizeTrees(delimiter="-")
