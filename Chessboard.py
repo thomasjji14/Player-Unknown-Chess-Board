@@ -108,6 +108,11 @@ class Chessboard(Canvas):
             outline='#6D9F58',
             width=customWidth,
             )
+    
+    def resetBoard(self):
+        self.__board = [[Cell() for j in range(self.BOARD_LEN)
+                        ] for i in range(self.BOARD_LEN)]
+
 
     # Photoimages can only be created AFTER declaring a tkinter object
     @staticmethod

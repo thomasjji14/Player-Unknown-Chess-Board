@@ -6,11 +6,12 @@ from CanvasUtility import *
 from Cell import Cell
 from Player import *
 import chess
+from collections import deque
 from Kibitzer import *
 
 from FileManager import *
 
-from Gametree import Gametree
+from Gametree import LinkedTree
 
 import chess
 
@@ -46,10 +47,13 @@ class Game:
         self.__base.bind('<Button-3>', self.__rightClickEvent)
         self.__base.bind('<ButtonRelease-3>', self.__finishShape)
         # self.__base.bind('<Right>', self.__advancePGN)
-        # self.__base.bind('<Left>', self.__backtrackPGN)
+        self.__base.bind('<Left>', self.__backtrackPGN)
         # self.__base.bind('<space>', self.__printFEN)
         # self.__base.bind('<Up>', self.__printPGN)
         # self.__base.bind('<Return>', self.__inputGo)
+        self.__base.bind('r', self.__resetBoard)
+        self.__base.bind('<Control_L>s', self.__commitAllVariations)
+        self.__base.bind('a', self.__analyzePosition)
 
         # Tracker for when pieces are moved
         self.__activeCell = Cell()
@@ -68,43 +72,16 @@ class Game:
         self.__opponentPlayer = LichessPlayer(startingFEN = FENCode)
         # self.__kibitzer = ChessDBCNKibitzer()
         self.__kibitzer = ChessDBCNKibitzer()
-        self.__tree = Gametree()
-        self.__tree.loadTree("user.json")
-        self.__tree.beginFromMoves(["e4","e5","Nf3","Nc6","Bc4","Nf6","Ng5"])
+        # self.__tree = Gametree()
 
-    def __readFEN(self, FENCode, asWhite):
-        """ Takes in a FENCode and initializes the board """
-        self.__boardLogic.set_fen(FENCode)
+        
+        # self.__tree.loadTree("user.json")
 
-        boardInfo = FENCode.split(" ")
+        self.__activeTree = LinkedTree()
 
-        # Splits the FENCode into relevant information
-        boardCode = boardInfo[0]
-
-        # When the player at the bottom part of the board is black,
-        # the position is simply miorred rather than changing indexing.
-        # Consequently, when printing out the FEN, this must be reversed
-        if not asWhite:
-            boardCode = boardCode[::-1]
-        self.__isPlayerWhite = asWhite
-
-        cleanedCode = ""
-        numberList = ("1", "2", "3", "4", "5", "6", "7", "8")
-
-        # Converts numbers into dashes
-        for index in range(len(boardCode)):
-            if boardCode[index] in numberList:
-                for repeats in range(int(boardCode[index])):
-                    cleanedCode += "-"
-            else:
-                cleanedCode += boardCode[index]
-
-        textBoard = [list(row) for row in cleanedCode.split("/")]
-        for row in range(self.BOARD_LEN):
-            for col in range(self.BOARD_LEN):
-                self.__board.textUpdate(textBoard[row][col], 
-                                        Coordinate(row, col))
-
+        self.__customFEN = FENCode
+        # self.__customMoveList = ["e4","e5","Nf3","Nc6","Bc4","Nf6","Ng5"]
+        # self.__tree.beginFromMoves(self.__customMoveList)
 
     def __move(self, event):
         """ Updates the piece to the mouse's position """
@@ -184,24 +161,24 @@ class Game:
 
                 moveSAN = self.__boardLogic.san(chess.Move.from_uci(attemptedMoveAN))
 
-                self.__tree.pushMove(moveSAN)
-                self.__tree.saveTree("user.json")
-
-
                 self.__boardLogic.push_uci(attemptedMoveAN)
+                self.__activeTree.advance(moveSAN)
 
                 self.__board.update_idletasks()
-                try:
+                # try:p
+                if True:
                     # Get and push the oppponent's move
                     #lan
-                    oppMove = self.__opponentPlayer.getMove(attemptedMoveAN)
-                    self.__tree.pushMove(self.__LANtoSAN(oppMove))
-                    self.__tree.saveTree("user.json")
+                    oppMove = self.__opponentPlayer.getMove(
+                        self.__boardLogic.fen()
+                        # attemptedMoveAN, 
+                        # [self.__SANtoLAN(move) \
+                        #  for move in self.__activeTree.getPlayedMoves()]
+                        )
+                    self.__activeTree.advance(self.__LANtoSAN(oppMove))
                     self.pushMove(oppMove)
-                except:
-                    print("Out of moves.")
-                    pass
-
+                # except:
+                    # print("Out of moves.")
                 ktext = self.__kibitzer.getMoves(self.__boardLogic.fen())
 
                 moveTexts = list(ktext.keys())
@@ -471,6 +448,116 @@ class Game:
         )
         self.__board.update_idletasks()
 
+    def __resetBoard(self, event):
+        print('r')
+        self.__promotionText = ''
+        self.__promotionImages = []
+        self.__promotionButtons = []
+
+        # Tracker for when pieces are moved
+        self.__activeCell = Cell()
+
+        self.__activeArrows = {}
+        self.__activeCircles = {}
+        self.__originalArrowCoordinate = ()
+
+        self.__board.resetBoard()
+
+        self.__readFEN(self.__customFEN, self.__isPlayerWhite)
+
+        # self.__tree.revertTree()
+        self.__opponentPlayer = LichessPlayer(startingFEN = self.__customFEN)
+
+    def __commitAllVariations(self, event):
+        print('c')
+        # self.__tree.commitTree()
+        # self.__tree.saveTree("user.json")
+
+    def __analyzePosition(self, event):
+        print(self.__kibitzer.getMoves(self.__boardLogic.fen()))
+
+    def __readFEN(self, FENCode, asWhite):
+        """ Takes in a FENCode and initializes the board """
+        self.__boardLogic.set_fen(FENCode)
+        self.__isPlayerWhite = asWhite
+
+        boardInfo = FENCode.split(" ")
+
+        # Splits the FENCode into relevant information
+        boardCode = boardInfo[0]
+
+        # When the player at the bottom part of the board is black,
+        # the position is simply miorred rather than changing indexing.
+        # Consequently, when printing out the FEN, this must be reversed
+        if not self.__isPlayerWhite:
+            boardCode = boardCode[::-1]
+
+        boardGrid = self.__expandFEN(boardCode)
+
+        for row in range(self.BOARD_LEN):
+            for col in range(self.BOARD_LEN):
+                self.__board.textUpdate(boardGrid[row][col], 
+                                        Coordinate(row, col))
+
+    def __expandFEN(self, boardFEN) -> list:
+        cleanedCode = ""
+        numberList = ("1", "2", "3", "4", "5", "6", "7", "8")
+
+        # Converts numbers into dashes
+        for index in range(len(boardFEN)):
+            if boardFEN[index] in numberList:
+                for repeats in range(int(boardFEN[index])):
+                    cleanedCode += "-"
+            else:
+                cleanedCode += boardFEN[index]
+        
+        boardRowLists = [list(row) for row in cleanedCode.split("/")] 
+
+        boardGrid = []
+        for row in boardRowLists:
+            rowInfo = []
+            for character in row:
+                rowInfo.append(character)
+
+            boardGrid.append(rowInfo)
+        
+        return boardGrid
+
+
+
+    def __backtrackPGN(self, event):
+        if not self.__activeTree.hasMoves():
+            return
+        
+        # The actual move isn't important
+        self.__activeTree.backpedal()
+
+        # # Update tree to follow the game progress
+        # self.__activeTree.startFrom(list(self.__playedMoves))
+        
+        lastBoardFEN = self.__boardLogic.board_fen()
+        self.__boardLogic.pop()
+        newBoardFEN = self.__boardLogic.board_fen()
+        if not self.__isPlayerWhite:
+            lastBoardFEN = lastBoardFEN[::-1]
+            newBoardFEN = newBoardFEN[::-1]
+
+        lastBoard = self.__expandFEN(lastBoardFEN)
+        newBoard = self.__expandFEN(newBoardFEN)
+
+        # It's faster to check what needs to be updated instead of
+        # redrawing every new image 
+        for row in range(self.BOARD_LEN):
+            for col in range(self.BOARD_LEN):
+                if not lastBoard[row][col] == newBoard[row][col]:
+                    self.__board.textUpdate(
+                        newBoard[row][col], Coordinate(row,col))
+
+    def __advancePGN(self, event):
+        # if 
+        pass
+
+
     @staticmethod
     def numToLetter(num):
         """ Converts a number from 0-7 to a letter, A-H """
@@ -485,8 +572,8 @@ base = Tk()
 
 base.title("Chess")
 
-# board = Game(base, Game.DEFAULT_FEN, True)
-board = Game(base, "r1bqkb1r/pppp1ppp/2n2n2/4p1N1/2B1P3/8/PPPP1PPP/RNBQK2R b KQkq - 5 4", False)
+board = Game(base, Game.DEFAULT_FEN, True)
+# board = Game(base, "r1bqkb1r/pppp1ppp/2n2n2/4p1N1/2B1P3/8/PPPP1PPP/RNBQK2R b KQkq - 5 4", False)
 # board = Game(base, "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3", True)
 
 base.mainloop()

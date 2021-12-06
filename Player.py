@@ -20,7 +20,7 @@ class LichessPlayer():
         ratings = [1600, 1800, 2000, 2200, 2500],
         startingFEN = DEFAULT_FEN
         ):
-        self.__pastMoves = []
+        # self.__pastMoves = []
         self.__params = {
             "variant": variant,  
             "speeds[]": speeds, 
@@ -30,9 +30,15 @@ class LichessPlayer():
             "fen" : startingFEN
         }
 
-    def getMove(self, lastMove):
-        self.__pastMoves.append(lastMove)
-        self.__params["play"] = self.__moveToString()
+#     def getMove(self, lastMove, moveList = None):
+#         if moveList is None:
+#             self.__pastMoves.append(lastMove)
+#         else:
+#             self.__pastMoves = moveList
+#         self.__params["play"] = self.__moveToString(self.__pastMoves)
+
+    def getMove(self, newFEN):
+        self.__params["fen"] = newFEN
 
         gameURLResponse = requests.get("https://explorer.lichess.ovh/lichess", params = self.__params)
 
@@ -53,17 +59,18 @@ class LichessPlayer():
         randomMoveNumber = random.randint(1, totalGames)
         randomMove = self.__getRandomMove(randomMoveNumber, moveCumFrequency)
 
-        self.__pastMoves.append(randomMove)
+        # self.__pastMoves.append(randomMove)
 
         return randomMove
     
-    def __moveToString(self):
-        return "".join([i+"," for i in self.__pastMoves])[:-1]
+    def __moveToString(self, moves):
+        return "".join([i+"," for i in moves])[:-1]
 
     def __getRandomMove(self, randNum, moveFrequency):
         for key in list(moveFrequency.keys()):
             if randNum <= moveFrequency[key]:
                 return key
+
 
 class VariationPlayer():
     
