@@ -1,21 +1,19 @@
 # from re import split
 # from copy import *
-# import json
+from __future__ import annotations
+import json
 
 
 # class MoveNotInTreeError(RuntimeError):
 #     def __init__(self, str = ""):
 #         super(str)
-from __future__ import annotations
 from collections import deque
-from typing import Deque
 
 class _LinkedTreeNode():
 
     def __init__(self, parentNode = None, parentsMove = None):
         self._parentNode = parentNode
         self._parentsMove = parentsMove
-        self._moveQueue = deque()
         self._moveDict = {}
 
     def __str__(self):
@@ -25,7 +23,6 @@ class _LinkedTreeNode():
         return f"_LinkedTreeNode({self._parentNode})"
     
     def addMove(self, move) -> None:
-        self._moveQueue.append(move)
         self._moveDict[move] = _LinkedTreeNode(self, move)
         pass
 
@@ -61,11 +58,10 @@ class _LinkedTreeNode():
         return len(self._moveDict)
 
     def getAllMoves(self) -> list:
-        return list(self._moveQueue)
+        return list(self._moveDict.keys())
 
     def getAllChildren(self) -> list:
-        moves = self.getAllMoves()
-        return [self._moveDict[move] for move in moves]
+        return list(self._moveDict.values())
 
     def dropNode(self, moveName):
         self._moveDict.pop(moveName)
@@ -110,7 +106,8 @@ class LinkedTree():
         self._curNode = self._curNode.getNext(move)
 
         # DEBUG
-        print(self.asLines())
+        # print(self.asLines())
+        print(self.toDict())
 
         return move
 
@@ -123,11 +120,11 @@ class LinkedTree():
             self._curNode.addMove(move)       
     
     def backpedal(self) -> str:
-        """ Returns the last move played """
-        if self._curNode is self._root: 
-            raise IndexError("cannot go further back or tree not filled")
-
-        self._curNode = self._curNode.getParent()
+        """ Returns the last move played. Returns None if it's at the root"""
+        parent = self._curNode.getParent()
+        if parent is None:
+            return None
+        self._curNode = parent
         return self._startingMoves.pop()
     
     def deleteMove(self):
@@ -220,23 +217,102 @@ class LinkedTree():
 
     def hasNext(self):
         return self._curNode.getNumChildren() != 0
-    # def toDict(self):
-    #     returnDict = {}
+
+    def saveTree(self, filename = "user.json"):
+        with open(filename, "w+") as f:
+            json.dump(self.toDict(), f, sort_keys = True, indent = 4)
+
+    def loadTree(self, filename = "user.json"):
+        # Reset tree
+        self.resetTree()
+
+
+        with open(filename, "r+") as f:
+            dictTree = json.load(f)
+
+        class DepthMove():
+            def __init__(self, dictTree, depth, lastMove):
+                self.dictTree = dictTree
+                self.depth = depth
+                self.lastMove = lastMove
+
+        moveCallStack = deque()
+        nodeStack = deque()
+
+        lines = []
+
+        nodeStack.append(DepthMove(dictTree, 0, None))
+        while len(nodeStack) != 0:
+
+            curTraversal = nodeStack.pop()
+
+            parentMove = curTraversal.lastMove
+            if not parentMove is None:
+                moveCallStack.append(parentMove)
+                self.addMove(parentMove)
+                self.advance(parentMove)
+
+            while curTraversal.depth != 0 and curTraversal.depth - 1 < len(moveCallStack):
+                moveCallStack.pop()
+                self.backpedal()
+
+            if len(curTraversal.dictTree) == 0:
+                lines.append(list(moveCallStack))
+            else:
+                # Reverse keys to reinforce DFS ordering
+                keys = list(curTraversal.dictTree.keys())[::-1]
+                for move in keys:
+                    nodeStack.append(DepthMove(curTraversal.dictTree[move], curTraversal.depth + 1, move))
+        
+        return lines
+            
+    
+    # NOTE: This data structure is used instead of directly a dictioanry
+    #       since it allows for easier traversal.
+    def toDict(self):
+        returnDict = {}
+        self._toDictHelper(self._root, returnDict)
+        return returnDict
+
+    def resetTree(self):
+        self._root = _LinkedTreeNode()
+        self._curNode = self._root
+        self._startingMoves = deque()
+
+    def moveToRoot(self):
+        self._curNode = self._root
+        self._startingMoves = deque()
+
+    def moveToEnd(self):
+        while self._curNode.hasMove():
+            self.addMove(self._curNode.getAllMoves[0])
+
+    @staticmethod
+    def _toDictHelper(curNode, curDict):
+        if curNode.isEmpty():
+            return
+        for child in curNode.getAllChildren():
+            move = child.getParentMove()
+            curDict[move] = {}
+            LinkedTree._toDictHelper(child, curDict[move])
+            
 
         
     
 
 if __name__ == "__main__":
     a = LinkedTree()
-    lines = [
-        ["e4", "e5", "d3"],
-        ["e4", "d4", "exd4"],
-    ]
+    a.loadTree("user.json")
+    print(a.toDict())
+    # lines = [
+    #     ["e4", "e5", "d3"],
+    #     ["e4", "d4", "exd4"],
+    # ]
 
-    for line in lines:
-        a.populateFromRoot(line)
+    # for line in lines:
+    #     a.populateFromRoot(line)
 
-    print(a.printTree())
-    print(a.asLines())
+    # print(a.printTree())
+    # print(a.asLines())
 
-    lines = lines
+    # lines = lines

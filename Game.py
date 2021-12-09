@@ -47,8 +47,8 @@ class Game:
         # self._base.bind('<space>', self._printFEN)
         # self._base.bind('<Up>', self._printPGN)
         # self._base.bind('<Return>', self._inputGo)
-        self._base.bind('r', self._resetBoard)
-        self._base.bind('<Control_L>s', self._commitAllVariations)
+        self._base.bind('<Up>', self._resetBoard)
+        self._base.bind('<Control_L>s', self._saveTree)
         self._base.bind('a', self._analyzePosition)
 
         # Tracker for when pieces are moved
@@ -447,13 +447,30 @@ class Game:
 
         self._readFEN(self._customFEN, self._isPlayerWhite)
 
-        # self._tree.revertTree()
-        self._opponentPlayer = LichessPlayer(startingFEN = self._customFEN)
+        self._activeTree.resetTree()
 
-    def _commitAllVariations(self, event):
-        print('c')
-        # self._tree.commitTree()
-        # self._tree.saveTree("user.json")
+        # self._activeTree.resetIndexer()
+
+        # self._opponentPlayer = LichessPlayer(startingFEN = self._customFEN)
+    
+    def _toLeaf(self, event):
+        self._promotionText = ''
+        self._promotionImages = []
+        self._promotionButtons = []
+
+        # Tracker for when pieces are moved
+        self._activeCell = Cell()
+
+        self._activeArrows = {}
+        self._activeCircles = {}
+        self._originalArrowCoordinate = ()
+
+        self._board.resetBoard()
+
+        
+
+    def _saveTree(self, event):
+        self._activeTree.saveTree("user.json")
 
     def _analyzePosition(self, event):
         print(self._kibitzer.getMoves(self._boardLogic.fen()))
