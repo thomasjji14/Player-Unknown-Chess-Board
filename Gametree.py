@@ -8,6 +8,7 @@ import json
 #     def __init__(self, str = ""):
 #         super(str)
 from collections import deque
+from tkinter.constants import NONE
 
 class _LinkedTreeNode():
 
@@ -26,11 +27,10 @@ class _LinkedTreeNode():
         self._moveDict[move] = _LinkedTreeNode(self, move)
         pass
 
-
     def getNext(self, move) -> str:
         return self._moveDict[move]
     
-    def hasMove(self, move) -> bool:
+    def isMoveIn(self, move) -> bool:
         return move in list(self._moveDict.keys())
 
     def getParent(self) -> _LinkedTreeNode:
@@ -38,21 +38,6 @@ class _LinkedTreeNode():
 
     def getParentMove(self) -> str:
         return self._parentsMove
-
-    # def getMoveWeight(self, move) -> int:
-    #     for move in self._moveQueue:
-    #         if move.getMove() == weightedMove.getMove():
-    #             return move.getWeight()
-            
-    #     raise IndexError()
-
-    # def setMoveWeight(self, move) -> None:
-    #     for queuedmove in self._moveQueue:
-    #         if move == move:
-    #             move.setWeight(move.getWeight())
-    #             return
-            
-    #     raise IndexError()
 
     def getNumChildren(self) -> int:
         return len(self._moveDict)
@@ -69,6 +54,10 @@ class _LinkedTreeNode():
     def isEmpty(self):
         return self.getNumChildren() == 0
 
+    def getNextTop(self):
+        if self.isEmpty(): 
+            return None
+        return self.getAllMoves()[0]
 
 class LinkedTree():
     """
@@ -80,7 +69,7 @@ class LinkedTree():
     priorities are higher values (i.e. using a min heap)
     """
 
-    def __init__(self):
+    def __init__(self, FEN = None):
         self._root = _LinkedTreeNode()
         self._curNode = self._root
         self._startingMoves = deque()
@@ -98,7 +87,7 @@ class LinkedTree():
 
         if move is None:
             move = self._curNode.getAllMoves()[0]
-        elif not self._curNode.hasMove(move):
+        elif not self._curNode.isMoveIn(move):
             raise KeyError("Move not found")
 
         self._startingMoves.append(move)
@@ -116,7 +105,7 @@ class LinkedTree():
         Adds the move into the tree. No behavior changes if move exists 
         already.
         """
-        if not self._curNode.hasMove(move):
+        if not self._curNode.isMoveIn(move):
             self._curNode.addMove(move)       
     
     def backpedal(self) -> str:
@@ -284,8 +273,18 @@ class LinkedTree():
         self._startingMoves = deque()
 
     def moveToEnd(self):
-        while self._curNode.hasMove():
-            self.addMove(self._curNode.getAllMoves[0])
+        while not self._curNode.isEmpty():
+            self.advance(self._curNode.getAllMoves[0])
+
+    def getTopMoves(self):
+        cur = self._root
+        moves = []
+        while not cur.isEmpty():
+            moveName = cur.getNextTop()
+            moves.append(moveName)
+            cur = cur.getNext(moveName)
+    
+        return moves
 
     @staticmethod
     def _toDictHelper(curNode, curDict):

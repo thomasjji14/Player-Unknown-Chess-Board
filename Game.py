@@ -8,6 +8,7 @@ from collections import deque
 from Kibitzer import *
 from FileManager import *
 from Gametree import LinkedTree
+from TreeViewer import TreeViewer
 import chess
 import copy
 
@@ -24,17 +25,20 @@ class Game:
         # Tkinter object initailizers
         self._base = base
 
+        # Frame is a wrapper for the board, don't add directly to 
+        # boardFrame
         self._boardFrame = Frame(base)
         self._boardFrame.grid(row=0, column=0, rowspan=1, columnspan=1)
         self._board = Chessboard(self._boardFrame)
         self._board.grid(row = 0, column = 0)
         self._boardLogic = chess.Board()
 
+        self._otherthing = TreeViewer(base)
+        self._otherthing.grid(row = 0, column = 1)
+
         self._promotionText = ''
         self._promotionImages = []
         self._promotionButtons = []
-
-        # self._positionToEnPassant = None
 
         # Bindings
         self._base.bind('<B1-Motion>', self._move)
@@ -66,10 +70,7 @@ class Game:
         #     {"e4" : {"c6": {"Nf3" : {"d5" : {"Nc3" : {"dxe4" : {"Nxe4" : {"Bf5" : {"Ng3" : {"Bg6" : {"h4" : {"h6" : {"Ne5" : {"Bh7" : {"Qh5" : {"g6" : {"Bc4" : {"e6" : {"Qe2" : {"Bg7" : {"Nxf7" : {"Kxf7" : {"Qxe6+" : {"Kf8" : {"Qf7#" : None}}}}}}}}}}}}}}}}}}}}}}}}}
         # )
         self._opponentPlayer = LichessPlayer(startingFEN = FENCode)
-        # self._kibitzer = ChessDBCNKibitzer()
         self._kibitzer = ChessDBCNKibitzer()
-        # self._tree = Gametree()
-
         
         # self._tree.loadTree("user.json")
 
@@ -143,55 +144,7 @@ class Game:
                self._originalPos = originalLocation
                self._activeCell = initialCell
 
-            # converts the coordinates to LAN
-            attemptedMoveAN = \
-                Coordinate.toLAN(self._originalPos, clickLoc, self._isPlayerWhite) \
-                + self._promotionText.lower()
-
-            attemptedMove = chess.Move.from_uci(attemptedMoveAN)
-
-            allMoves = self._boardLogic.legal_moves
-
-            if (attemptedMove in allMoves):
-                self._endMove(clickLoc)
-
-                moveSAN = self._boardLogic.san(chess.Move.from_uci(attemptedMoveAN))
-
-                self._boardLogic.push_uci(attemptedMoveAN)
-                self._activeTree.addMove(moveSAN)
-                self._activeTree.advance(moveSAN)
-
-                self._board.update_idletasks()
-                # try:p
-                if True:
-                    # Get and push the oppponent's move
-                    #lan
-                    oppMove = self._opponentPlayer.getMove(
-                        self._boardLogic.fen()
-                        # attemptedMoveAN, 
-                        # [self._SANtoLAN(move) \
-                        #  for move in self._activeTree.getPlayedMoves()]
-                        )
-
-                    self._activeTree.addMove(self._LANtoSAN(oppMove))
-                    self._activeTree.advance(self._LANtoSAN(oppMove))
-                    self.pushMove(oppMove)
-                # except:
-                    # print("Out of moves.")
-                ktext = self._kibitzer.getMoves(self._boardLogic.fen())
-
-                moveTexts = list(ktext.keys())
-                i = 5
-                while(len(moveTexts) > 0 and i != 0):
-                    move = moveTexts.pop(0)
-                    evalText = ktext[move]['score']
-                    evalText = f'{int(evalText)/100:+1.2f}'
-                    print(self._LANtoSAN(move) + " " + str(evalText) )
-                    i -= 1
-                print("--------------")
-
-
-                return
+            self._endMove(clickLoc)
 
         self._rightClickEvent(None)
     
@@ -213,9 +166,20 @@ class Game:
 
         self._endMove(endPos)
 
-        self._boardLogic.push_san(text)
-
     def _endMove(self, finalPos):
+
+        # converts the coordinates to LAN
+        attemptedMoveAN = \
+            Coordinate.toLAN(self._originalPos, finalPos, self._isPlayerWhite) \
+            + self._promotionText.lower()
+
+        attemptedMove = chess.Move.from_uci(attemptedMoveAN)
+
+        allMoves = self._boardLogic.legal_moves
+
+        if (not attemptedMove in allMoves):
+            return
+
         isWhite = self._boardLogic.turn
         # Centers the object onto the square it landed on
         self._board.moveto(
@@ -301,6 +265,39 @@ class Game:
 
         # Forget the active piece
         self._activeCell = Cell()
+
+        # -----------------------------
+
+        moveSAN = self._boardLogic.san(chess.Move.from_uci(attemptedMoveAN))
+
+        self._boardLogic.push_uci(attemptedMoveAN)
+        self._activeTree.addMove(moveSAN)
+        # Update text
+        self._otherthing.fill(self._activeTree.getTopMoves())
+        self._activeTree.advance(moveSAN)
+
+        self._board.update_idletasks()
+        
+        # ktext = self._kibitzer.getMoves(self._boardLogic.fen())
+
+        # moveTexts = list(ktext.keys())
+        # i = 5
+        # while(len(moveTexts) > 0 and i != 0):
+        #     move = moveTexts.pop(0)
+        #     evalText = ktext[move]['score']
+        #     evalText = f'{int(evalText)/100:+1.2f}'
+        #     print(self._LANtoSAN(move) + " " + str(evalText) )
+        #     i -= 1
+        # print("--------------")
+
+        if not self._boardLogic.turn:
+            # Get and push the oppponent's move
+            #lan
+            oppMove = self._opponentPlayer.getMove(self._boardLogic.fen())
+            self.pushMove(oppMove)
+        # except:
+            # print("Out of moves.")
+        # -----------------
 
     def _rightClickEvent(self, event):
         """ Restores the board prior to clicking anything """
