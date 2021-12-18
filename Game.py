@@ -40,8 +40,8 @@ class Game:
         self._promotionImages = []
         self._promotionButtons = []
 
-        # Bindings
         self._base.bind('<B1-Motion>', self._move)
+        # Bindings
         self._base.bind('<Button-1>', self._selectPiece)
         self._base.bind('<ButtonRelease-1>', self._deselectPiece)
         self._base.bind('<Button-3>', self._rightClickEvent)
@@ -57,7 +57,7 @@ class Game:
 
         # Tracker for when pieces are moved
         self._activeCell = Cell()
-        
+
         self._isPlayerWhite = asWhite
 
         self._activeArrows = {}
@@ -66,12 +66,12 @@ class Game:
 
         self._readFEN(FENCode, asWhite)
 
-        # self._opponentPlayer = VariationPlayer(            
+        # self._opponentPlayer = VariationPlayer(
         #     {"e4" : {"c6": {"Nf3" : {"d5" : {"Nc3" : {"dxe4" : {"Nxe4" : {"Bf5" : {"Ng3" : {"Bg6" : {"h4" : {"h6" : {"Ne5" : {"Bh7" : {"Qh5" : {"g6" : {"Bc4" : {"e6" : {"Qe2" : {"Bg7" : {"Nxf7" : {"Kxf7" : {"Qxe6+" : {"Kf8" : {"Qf7#" : None}}}}}}}}}}}}}}}}}}}}}}}}}
         # )
         self._opponentPlayer = LichessPlayer(startingFEN = FENCode)
         self._kibitzer = ChessDBCNKibitzer()
-        
+
         # self._tree.loadTree("user.json")
 
         self._activeTree = LinkedTree()
@@ -87,11 +87,11 @@ class Game:
 
             # Centers the piece on the mouse's center
             self._board.moveto(
-                self._activeCell.record, 
-                event.x-int(self.BOX_LEN/2), 
+                self._activeCell.record,
+                event.x-int(self.BOX_LEN/2),
                 event.y-int(self.BOX_LEN/2)
                 )
-            
+
             # Moves the moving piece in front of all other drawn pieces
             self._board.tag_raise(self._activeCell.record)
 
@@ -147,7 +147,7 @@ class Game:
             self._endMove(clickLoc)
 
         self._rightClickEvent(None)
-    
+
     def pushMove(self, text):
         # Rough SAN detection
         if self._isLAN(text):
@@ -192,9 +192,9 @@ class Game:
         # Special Case: When en passant occurs, the pawn captured needs
         #               to be manually found and removed.
         if self._activeCell.text.upper() == 'P' and abs(delta.y) == 1 and self._board.getCell(finalPos).isEmpty():
-            pawn_x_index = finalPos.x + (-1 if isWhite ^ 
+            pawn_x_index = finalPos.x + (-1 if isWhite ^
                                          self._isPlayerWhite else 1)
-            
+
             self._board.delete(self._board.getCell(Coordinate(
                 finalPos.x+ (1 if isWhite else -1),finalPos.y)))
             self._board.textUpdate("-" , Coordinate(pawn_x_index,finalPos.y))
@@ -206,7 +206,7 @@ class Game:
             homeRowX = finalPos.x
             y_change = int(2 * abs(delta.y)/delta.y) * -1
             kingAdjustment = y_change
-            
+
             # Need to find the rook's y location, default to 0
             rookY = 0
             if abs(7 - finalPos.y) <= 2: # close to the other side
@@ -215,7 +215,7 @@ class Game:
 
             oldKingCoordinate = self._originalPos
             newKingCoordinate = Coordinate(homeRowX, kingY + kingAdjustment)
-            
+
             # Because the rook can travel 2 or 3 spaces depending on
             # castle location, point of reference is the original king 
             # location, where 1 unit is the rook and 2 is the king.
@@ -241,7 +241,7 @@ class Game:
 
             self._board.textUpdate(self._board.getCell(oldKingCoordinate).text, newKingCoordinate)
             self._board.textUpdate("-", oldKingCoordinate)
-        
+
         # non-castling cases
         else:
             # Removes old piece images on capture
@@ -277,7 +277,7 @@ class Game:
         self._activeTree.advance(moveSAN)
 
         self._board.update_idletasks()
-        
+
         # ktext = self._kibitzer.getMoves(self._boardLogic.fen())
 
         # moveTexts = list(ktext.keys())
@@ -306,7 +306,7 @@ class Game:
             # Centers the piece back to its original position
             self._board.moveto(
                 self._board.getCell(self._originalPos).record,
-                getCanvasX(self._originalPos), 
+                getCanvasX(self._originalPos),
                 getCanvasY(self._originalPos))
 
             # Forget the active piece
@@ -332,13 +332,13 @@ class Game:
             (int(x/self.BOX_LEN)+0.5)*self.BOX_LEN,
             (int(y/self.BOX_LEN)+0.5)*self.BOX_LEN
         )
-        
+
     def _finishShape(self, event):
         """ Completes the shape if possible, erases any duplicates """
         # This blocks if you right click and then left click
         if self._originalArrowCoordinate is not None:
             x = event.x
-            y = event.y    
+            y = event.y
 
             final = Coordinate(
                 (int(x/self.BOX_LEN)+0.5)*self.BOX_LEN,
@@ -363,7 +363,7 @@ class Game:
                                            in list(self._activeArrows.keys()):
                     self._board.delete(
                         self._activeArrows[(
-                            self._originalArrowCoordinate.toTuple(), 
+                            self._originalArrowCoordinate.toTuple(),
                             final.toTuple()
                             )]
                         )
@@ -373,9 +373,9 @@ class Game:
                 # Draws the arrow, indexing the original and final box
                 else:
                     self._activeArrows[
-                        (self._originalArrowCoordinate.toTuple(), 
+                        (self._originalArrowCoordinate.toTuple(),
                             final.toTuple())] = \
-                         self._board.drawArrow(self._originalArrowCoordinate, 
+                         self._board.drawArrow(self._originalArrowCoordinate,
                                                 final)
 
             self._originalArrowCoordinate = ()
@@ -422,7 +422,7 @@ class Game:
         self._testWindow = self._board.create_window(
             x_pixel,
             y_pixel,
-            anchor = NW, 
+            anchor = NW,
             window = self._frame
         )
         self._board.update_idletasks()
@@ -449,7 +449,7 @@ class Game:
         # self._activeTree.resetIndexer()
 
         # self._opponentPlayer = LichessPlayer(startingFEN = self._customFEN)
-    
+
     def _toLeaf(self, event):
         self._promotionText = ''
         self._promotionImages = []
@@ -463,8 +463,6 @@ class Game:
         self._originalArrowCoordinate = ()
 
         self._board.resetBoard()
-
-        
 
     def _saveTree(self, event):
         self._activeTree.saveTree("user.json")
@@ -492,7 +490,7 @@ class Game:
 
         for row in range(self.BOARD_LEN):
             for col in range(self.BOARD_LEN):
-                self._board.textUpdate(boardGrid[row][col], 
+                self._board.textUpdate(boardGrid[row][col],
                                         Coordinate(row, col))
 
     def _expandFEN(self, boardFEN) -> list:
@@ -506,8 +504,8 @@ class Game:
                     cleanedCode += "-"
             else:
                 cleanedCode += boardFEN[index]
-        
-        boardRowLists = [list(row) for row in cleanedCode.split("/")] 
+
+        boardRowLists = [list(row) for row in cleanedCode.split("/")]
 
         boardGrid = []
         for row in boardRowLists:
@@ -516,19 +514,19 @@ class Game:
                 rowInfo.append(character)
 
             boardGrid.append(rowInfo)
-        
+
         return boardGrid
 
     def _backtrackPGN(self, event):
         if not self._activeTree.hasMoves():
             return
-        
+
         # The actual move isn't important
         self._activeTree.backpedal()
 
         # # Update tree to follow the game progress
         # self._activeTree.startFrom(list(self._playedMoves))
-        
+
         lastBoardFEN = self._boardLogic.board_fen()
         self._boardLogic.pop()
         newBoardFEN = self._boardLogic.board_fen()
@@ -551,7 +549,7 @@ class Game:
         newBoard = self._expandFEN(newBoardFEN)
 
         # It's faster to check what needs to be updated instead of
-        # redrawing every new image 
+        # redrawing every new image
         for row in range(self.BOARD_LEN):
             for col in range(self.BOARD_LEN):
                 if not lastBoard[row][col] == newBoard[row][col]:

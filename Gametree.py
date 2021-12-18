@@ -19,17 +19,17 @@ class _LinkedTreeNode():
 
     def __str__(self):
         return f"Moves: {str(self._moveQueue)} | Dict: {str(self._moveDict)} | Parent: {self._parentNode}"
-    
+
     def __repr__(self):
         return f"_LinkedTreeNode({self._parentNode})"
-    
+
     def addMove(self, move) -> None:
         self._moveDict[move] = _LinkedTreeNode(self, move)
         pass
 
     def getNext(self, move) -> str:
         return self._moveDict[move]
-    
+
     def isMoveIn(self, move) -> bool:
         return move in list(self._moveDict.keys())
 
@@ -55,15 +55,15 @@ class _LinkedTreeNode():
         return self.getNumChildren() == 0
 
     def getNextTop(self):
-        if self.isEmpty(): 
+        if self.isEmpty():
             return None
         return self.getAllMoves()[0]
 
 class LinkedTree():
     """
     LinkedTree is similar to a linked list, but allows for multiple
-    (ordered) connections. The order is first by the weight (if 
-    specified), or otherwise by the order (LIFO). 
+    (ordered) connections. The order is first by the weight (if
+    specified), or otherwise by the order (LIFO).
 
     Note that 1 is defined as the default and highest weight, and lower
     priorities are higher values (i.e. using a min heap)
@@ -102,12 +102,12 @@ class LinkedTree():
 
     def addMove(self, move):
         """
-        Adds the move into the tree. No behavior changes if move exists 
+        Adds the move into the tree. No behavior changes if move exists
         already.
         """
         if not self._curNode.isMoveIn(move):
-            self._curNode.addMove(move)       
-    
+            self._curNode.addMove(move)
+
     def backpedal(self) -> str:
         """ Returns the last move played. Returns None if it's at the root"""
         parent = self._curNode.getParent()
@@ -115,7 +115,7 @@ class LinkedTree():
             return None
         self._curNode = parent
         return self._startingMoves.pop()
-    
+
     def deleteMove(self):
         # self._curNode
         pass
@@ -137,13 +137,13 @@ class LinkedTree():
             parentMove = curTraversal.node.getParentMove()
             if not parentMove is None:
                 treeString += spacer*curTraversal.depth + curTraversal.node.getParentMove() + "\n"
-            
+
             # The DFS goes from the last node to the first, flipping to
             # compensate
             children = curTraversal.node.getAllChildren()[::-1]
             for node in children:
                 nodeStack.append(DepthNode(node, curTraversal.depth + 1))
-        
+
         return treeString
 
     def asLines(self) -> list:
@@ -163,7 +163,7 @@ class LinkedTree():
 
             while curTraversal.depth != 0 and curTraversal.depth - 1 < len(moveCallStack):
                 moveCallStack.pop()
-            
+
             parentMove = curTraversal.node.getParentMove()
 
             if not parentMove is None:
@@ -177,7 +177,7 @@ class LinkedTree():
                 children = curTraversal.node.getAllChildren()[::-1]
                 for node in children:
                     nodeStack.append(DepthNode(node, curTraversal.depth + 1))
-        
+
         return lines
 
     def getPlayedMoves(self) -> list:
@@ -192,7 +192,7 @@ class LinkedTree():
             self.advance(move)
 
         self._curNode = oldCur
-    
+
     def populateFromCur(self, moves):
         oldCur = self._curNode
 
@@ -252,10 +252,10 @@ class LinkedTree():
                 keys = list(curTraversal.dictTree.keys())[::-1]
                 for move in keys:
                     nodeStack.append(DepthMove(curTraversal.dictTree[move], curTraversal.depth + 1, move))
-        
+
         return lines
-            
-    
+
+
     # NOTE: This data structure is used instead of directly a dictioanry
     #       since it allows for easier traversal.
     def toDict(self):
@@ -283,7 +283,7 @@ class LinkedTree():
             moveName = cur.getNextTop()
             moves.append(moveName)
             cur = cur.getNext(moveName)
-    
+
         return moves
 
     @staticmethod
@@ -294,10 +294,6 @@ class LinkedTree():
             move = child.getParentMove()
             curDict[move] = {}
             LinkedTree._toDictHelper(child, curDict[move])
-            
-
-        
-    
 
 if __name__ == "__main__":
     a = LinkedTree()
